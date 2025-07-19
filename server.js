@@ -5,7 +5,12 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 // 정적 파일 제공
 app.use(express.static(path.join(__dirname, 'public')));
@@ -101,5 +106,9 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 server.listen(PORT, HOST, () => {
     console.log(`채팅 서버가 포트 ${PORT}에서 실행 중입니다.`);
-    console.log(`http://localhost:${PORT}에서 접속하세요.`);
+    if (process.env.NODE_ENV === 'production') {
+        console.log(`서버가 배포 환경에서 실행 중입니다.`);
+    } else {
+        console.log(`http://localhost:${PORT}에서 접속하세요.`);
+    }
 });
