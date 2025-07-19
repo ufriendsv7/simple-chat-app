@@ -89,7 +89,6 @@ simple-chat-app/
 - 모던하고 직관적인 인터페이스
 - 반응형 디자인 (모바일/데스크톱 지원)
 - 부드러운 애니메이션 효과
-- 다크/라이트 테마 지원
 
 ## 배포
 
@@ -97,7 +96,12 @@ simple-chat-app/
 
 1. **Railway 계정 생성**: [railway.app](https://railway.app)에서 GitHub 계정으로 로그인
 
-2. **프로젝트 생성**:
+2. **GitHub 연동** (가장 간단한 방법):
+   - GitHub에 코드 푸시
+   - Railway에서 "Deploy from GitHub repo" 선택
+   - 저장소 연결 후 자동 배포
+
+3. **CLI 사용**:
    ```bash
    # Railway CLI 설치
    npm install -g @railway/cli
@@ -112,11 +116,6 @@ simple-chat-app/
    railway up
    ```
 
-3. **GitHub 연동** (더 간단한 방법):
-   - GitHub에 코드 푸시
-   - Railway에서 "Deploy from GitHub repo" 선택
-   - 저장소 연결 후 자동 배포
-
 ### 🌐 다른 배포 옵션
 
 #### Render
@@ -125,15 +124,6 @@ simple-chat-app/
 3. GitHub 저장소 연결
 4. Build Command: `npm install`
 5. Start Command: `npm start`
-
-#### Heroku
-1. [heroku.com](https://heroku.com)에서 계정 생성
-2. Heroku CLI 설치 및 로그인
-3. 앱 생성 및 배포:
-   ```bash
-   heroku create your-chat-app
-   git push heroku main
-   ```
 
 #### Vercel
 1. [vercel.com](https://vercel.com)에서 계정 생성
