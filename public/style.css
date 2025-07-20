@@ -4,10 +4,15 @@
     box-sizing: border-box;
 }
 
+:root {
+    --vh: 1vh;
+}
+
 body {
     font-family: 'Noto Sans KR', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     overflow: hidden;
     transition: all 0.3s ease;
 }
@@ -45,6 +50,7 @@ body.disconnected {
 
 .chat-container {
     height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     display: flex;
     flex-direction: column;
     background: rgba(255, 255, 255, 0.95);
@@ -231,6 +237,9 @@ body.disconnected {
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     transition: all 0.3s ease;
+    /* 모바일에서 항상 보이도록 */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 .message-form {
@@ -424,13 +433,39 @@ body.disconnected {
     
     .message-input-container {
         padding: 10px 15px;
+        /* 모바일에서 더 확실하게 보이도록 */
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 9999 !important;
     }
     
     .messages {
         padding-bottom: 80px;
+        /* 모바일에서 스크롤 영역 확보 */
+        height: calc(100vh - 200px);
+        height: calc(100dvh - 200px);
     }
     
     #message-input {
         font-size: 16px; /* 모바일에서 자동 확대 방지 */
+        /* 모바일에서 입력창이 확실히 보이도록 */
+        min-height: 44px;
+        -webkit-appearance: none;
+        border-radius: 22px;
+    }
+    
+    /* 모바일에서 전체 높이 조정 */
+    .chat-container {
+        height: 100vh;
+        height: 100dvh;
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .chat-main {
+        height: calc(100vh - 120px);
+        height: calc(100dvh - 120px);
     }
 }

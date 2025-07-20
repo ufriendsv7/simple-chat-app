@@ -26,6 +26,23 @@ const connectionStatus = document.getElementById('connection-status');
 // 현재 사용자 정보
 let currentUser = null;
 
+// 모바일 환경 감지
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+// 모바일에서 뷰포트 높이 조정
+function adjustViewportHeight() {
+    if (isMobile) {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        
+        // 입력창이 보이도록 강제로 스크롤
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            scrollToBottom();
+        }, 100);
+    }
+}
+
 // 메시지 전송
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -233,7 +250,20 @@ socket.on('reconnect_failed', () => {
 
 // 페이지 로드 시 스크롤을 맨 아래로
 window.addEventListener('load', () => {
+    adjustViewportHeight();
     scrollToBottom();
+});
+
+// 화면 크기 변경 시 뷰포트 조정
+window.addEventListener('resize', () => {
+    adjustViewportHeight();
+});
+
+// 화면 방향 변경 시 뷰포트 조정
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        adjustViewportHeight();
+    }, 500);
 });
 
 // 입력 필드 자동 포커스
