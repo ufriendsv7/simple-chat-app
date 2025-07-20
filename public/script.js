@@ -1,5 +1,14 @@
 // Socket.IO 연결
-const socket = io();
+const socket = io({
+    transports: ['websocket', 'polling'],
+    timeout: 20000,
+    forceNew: false,
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    maxReconnectionAttempts: 10
+});
 
 // DOM 요소들
 const messagesContainer = document.getElementById('messages');
@@ -12,6 +21,7 @@ const nameModal = document.getElementById('name-modal');
 const nameForm = document.getElementById('name-form');
 const newNameInput = document.getElementById('new-name-input');
 const cancelNameBtn = document.getElementById('cancel-name-btn');
+const connectionStatus = document.getElementById('connection-status');
 
 // 현재 사용자 정보
 let currentUser = null;
@@ -138,6 +148,13 @@ function formatTime(date) {
 // 연결 성공
 socket.on('connect', () => {
     console.log('서버에 연결되었습니다.');
+    addMessage('서버에 연결되었습니다.', 'system');
+    
+    // 연결 상태 표시
+    document.body.classList.add('connected');
+    document.body.classList.remove('disconnected');
+    connectionStatus.classList.add('connected');
+    connectionStatus.classList.remove('disconnected');
 });
 
 // 새 메시지 수신
@@ -179,15 +196,39 @@ socket.on('nameChanged', (data) => {
 });
 
 // 연결 해제
-socket.on('disconnect', () => {
-    console.log('서버와의 연결이 끊어졌습니다.');
+socket.on('disconnect', (reason) => {
+    console.log('서버와의 연결이 끊어졌습니다. 이유:', reason);
     addMessage('서버와의 연결이 끊어졌습니다. 다시 연결을 시도합니다...', 'system');
+    
+    // 연결 상태 표시
+    document.body.classList.remove('connected');
+    document.body.classList.add('disconnected');
+    connectionStatus.classList.remove('connected');
+    connectionStatus.classList.add('disconnected');
 });
 
 // 재연결
-socket.on('reconnect', () => {
-    console.log('서버에 재연결되었습니다.');
-    addMessage('서버에 재연결되었습니다.', 'system');
+socket.on('reconnect', (attemptNumber) => {
+    console.log(`서버에 재연결되었습니다. (시도 횟수: ${attemptNumber})`);
+    addMessage(`서버에 재연결되었습니다. (시도 횟수: ${attemptNumber})`, 'system');
+    
+    // 연결 상태 표시
+    document.body.classList.add('connected');
+    document.body.classList.remove('disconnected');
+    connectionStatus.classList.add('connected');
+    connectionStatus.classList.remove('disconnected');
+});
+
+// 재연결 시도
+socket.on('reconnect_attempt', (attemptNumber) => {
+    console.log(`재연결 시도 중... (${attemptNumber}번째 시도)`);
+    addMessage(`재연결 시도 중... (${attemptNumber}번째 시도)`, 'system');
+});
+
+// 재연결 실패
+socket.on('reconnect_failed', () => {
+    console.log('재연결에 실패했습니다.');
+    addMessage('재연결에 실패했습니다. 페이지를 새로고침해주세요.', 'system');
 });
 
 // 페이지 로드 시 스크롤을 맨 아래로
@@ -197,6 +238,21 @@ window.addEventListener('load', () => {
 
 // 입력 필드 자동 포커스
 messageInput.focus();
+
+// 입력창 포커스 시 자동 스크롤
+messageInput.addEventListener('focus', () => {
+    setTimeout(() => {
+        scrollToBottom();
+    }, 300);
+});
+
+// 입력창에서 포커스가 벗어날 때
+messageInput.addEventListener('blur', () => {
+    // 입력창이 포커스를 잃어도 메시지 영역이 가려지지 않도록
+    setTimeout(() => {
+        scrollToBottom();
+    }, 100);
+});
 
 // 키보드 단축키
 document.addEventListener('keydown', (e) => {
