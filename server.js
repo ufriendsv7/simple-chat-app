@@ -31,20 +31,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Gemini API 호출 함수
 async function callGeminiAPI(userMessage, conversationHistory = []) {
     try {
-        const prompt = `당신은 친근하고 도움이 되는 AI 어시스턴트입니다. 
-사용자와 자연스럽게 대화하며, 질문에 답변하고 도움을 제공하세요.
-답변은 한국어로 하고, 친근하고 자연스러운 톤으로 응답하세요.
+        const prompt = `넌 이름이 '잼민이'인 AI 대화자야. 대화자의 감정을 읽고, 감정적으로 공감하며, 감수성이 풍부한 답변을 해줘. 대화자에게 감정적인 조언도 해주고, 일반적인 질문에도 친근하게 답해줘. 답변은 반드시 한국어로 해.
 
-사용자 메시지: ${userMessage}
+대화자 메시지: ${userMessage}
 
-답변:`;
+잼민이의 답변:`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         return response.text();
     } catch (error) {
         console.error('Gemini API 호출 오류:', error);
-        return '죄송합니다. 현재 AI 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.';
+        return '죄송합니다. 현재 잼민이가 답변을 할 수 없습니다. 잠시 후 다시 시도해주세요.';
     }
 }
 

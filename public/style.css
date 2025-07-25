@@ -215,14 +215,20 @@ body.disconnected {
 }
 
 .message.ai .message-content {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    border-left: 4px solid #28a745;
+    background: linear-gradient(135deg, #ffdeeb 0%, #b197fc 100%);
+    color: #5f3dc4;
+    border-left: 4px solid #b197fc;
+    font-family: 'Noto Sans KR', 'Comic Sans MS', cursive, sans-serif;
+    font-size: 1.08em;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px rgba(177, 151, 252, 0.08);
 }
 
 .message.ai .message-user {
-    color: #28a745;
+    color: #b197fc;
     font-weight: 700;
+    font-family: 'Noto Sans KR', 'Comic Sans MS', cursive, sans-serif;
+    font-size: 1.1em;
 }
 
 .system-message {

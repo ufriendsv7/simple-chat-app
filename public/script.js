@@ -94,8 +94,9 @@ messageForm.addEventListener('submit', async (e) => {
     
     if (message) {
         // AI 메시지인지 확인
-        if (message.startsWith('@ai')) {
-            const aiMessage = message.substring(3).trim();
+        const aiPattern = /^@(ai|잼민이)/i;
+        if (aiPattern.test(message)) {
+            const aiMessage = message.replace(aiPattern, '').trim();
             if (aiMessage) {
                 // 사용자 메시지 먼저 표시
                 const userMessage = {
@@ -125,17 +126,17 @@ messageForm.addEventListener('submit', async (e) => {
                         // AI 응답 메시지 표시
                         const aiResponse = {
                             id: 'ai-response',
-                            user: 'guestAI',
+                            user: '잼민이',
                             text: data.response,
                             timestamp: new Date()
                         };
                         addMessage(aiResponse);
                     } else {
-                        addMessage('AI 응답을 받을 수 없습니다.', 'system');
+                        addMessage('잼민이의 응답을 받을 수 없습니다.', 'system');
                     }
                 } catch (error) {
                     console.error('AI API 호출 오류:', error);
-                    addMessage('AI 응답 처리 중 오류가 발생했습니다.', 'system');
+                    addMessage('잼민이 응답 처리 중 오류가 발생했습니다.', 'system');
                 }
             }
         } else {
@@ -195,7 +196,7 @@ function addMessage(message, type = 'message') {
         messageDiv.textContent = message;
     } else {
         const isOwnMessage = currentUser && message.id === socket.id;
-        const isAIMessage = message.user === 'guestAI';
+        const isAIMessage = message.user === '잼민이';
         
         let messageClass = 'message ';
         if (isOwnMessage) {
