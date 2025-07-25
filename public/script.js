@@ -22,6 +22,35 @@ const nameForm = document.getElementById('name-form');
 const newNameInput = document.getElementById('new-name-input');
 const cancelNameBtn = document.getElementById('cancel-name-btn');
 const connectionStatus = document.getElementById('connection-status');
+const accessModal = document.getElementById('access-modal');
+const accessForm = document.getElementById('access-form');
+const accessInput = document.getElementById('access-input');
+const accessError = document.getElementById('access-error');
+const chatContainer = document.getElementById('chat-container');
+
+const ACCESS_CODE = '1234';
+const ACCESS_KEY = 'chat_access_granted';
+
+function showChat() {
+    accessModal.style.display = 'none';
+    chatContainer.style.display = '';
+}
+
+function showAccessModal() {
+    accessModal.style.display = 'flex';
+    chatContainer.style.display = 'none';
+    accessInput.value = '';
+    accessError.textContent = '';
+    setTimeout(() => accessInput.focus(), 100);
+}
+
+function checkAccess() {
+    if (localStorage.getItem(ACCESS_KEY) === 'true') {
+        showChat();
+    } else {
+        showAccessModal();
+    }
+}
 
 // 현재 사용자 정보
 let currentUser = null;
@@ -247,6 +276,9 @@ socket.on('reconnect_failed', () => {
     console.log('재연결에 실패했습니다.');
     addMessage('재연결에 실패했습니다. 페이지를 새로고침해주세요.', 'system');
 });
+
+// 페이지 로드 시 access code 체크
+window.addEventListener('DOMContentLoaded', checkAccess);
 
 // 페이지 로드 시 스크롤을 맨 아래로
 window.addEventListener('load', () => {

@@ -11,7 +11,21 @@
     <!-- 연결 상태 인디케이터 -->
     <div class="connection-status disconnected" id="connection-status"></div>
     
-    <div class="chat-container">
+    <!-- Access Code 입력 모달 -->
+    <div id="access-modal" class="modal" style="display: flex;">
+        <div class="modal-content">
+            <h3>채팅방 입장 코드</h3>
+            <form id="access-form">
+                <input type="password" id="access-input" placeholder="Access Code 입력" maxlength="16" autocomplete="off" />
+                <div id="access-error" style="color: #dc3545; margin: 10px 0 0 0; min-height: 18px; font-size: 14px;"></div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-primary">입장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="chat-container" id="chat-container" style="display: none;">
         <div class="chat-header">
             <h1>💬 간단한 채팅</h1>
             <div class="user-info">
