@@ -73,13 +73,61 @@ function adjustViewportHeight() {
 }
 
 // 메시지 전송
-messageForm.addEventListener('submit', (e) => {
+messageForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = messageInput.value.trim();
     
     if (message) {
-        socket.emit('sendMessage', { text: message });
-        messageInput.value = '';
+        // AI 메시지인지 확인
+        if (message.startsWith('@ai')) {
+            const aiMessage = message.substring(3).trim();
+            if (aiMessage) {
+                // 사용자 메시지 먼저 표시
+                const userMessage = {
+                    id: 'user-ai-request',
+                    user: currentUser ? currentUser.name : '사용자',
+                    text: message,
+                    timestamp: new Date()
+                };
+                addMessage(userMessage);
+                
+                // 입력창 비우기
+                messageInput.value = '';
+                
+                // AI 응답 요청
+                try {
+                    const response = await fetch('/api/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: aiMessage })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.response) {
+                        // AI 응답 메시지 표시
+                        const aiResponse = {
+                            id: 'ai-response',
+                            user: 'guestAI',
+                            text: data.response,
+                            timestamp: new Date()
+                        };
+                        addMessage(aiResponse);
+                    } else {
+                        addMessage('AI 응답을 받을 수 없습니다.', 'system');
+                    }
+                } catch (error) {
+                    console.error('AI API 호출 오류:', error);
+                    addMessage('AI 응답 처리 중 오류가 발생했습니다.', 'system');
+                }
+            }
+        } else {
+            // 일반 메시지
+            socket.emit('sendMessage', { text: message });
+            messageInput.value = '';
+        }
     }
 });
 
@@ -132,7 +180,18 @@ function addMessage(message, type = 'message') {
         messageDiv.textContent = message;
     } else {
         const isOwnMessage = currentUser && message.id === socket.id;
-        messageDiv.className = `message ${isOwnMessage ? 'own' : 'other'}`;
+        const isAIMessage = message.user === 'guestAI';
+        
+        let messageClass = 'message ';
+        if (isOwnMessage) {
+            messageClass += 'own';
+        } else if (isAIMessage) {
+            messageClass += 'ai';
+        } else {
+            messageClass += 'other';
+        }
+        
+        messageDiv.className = messageClass;
         
         const time = new Date(message.timestamp).toLocaleTimeString('ko-KR', {
             hour: '2-digit',

@@ -214,6 +214,17 @@ body.disconnected {
     color: white;
 }
 
+.message.ai .message-content {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border-left: 4px solid #28a745;
+}
+
+.message.ai .message-user {
+    color: #28a745;
+    font-weight: 700;
+}
+
 .system-message {
     text-align: center;
     color: #6c757d;

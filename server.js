@@ -2,9 +2,18 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Gemini API 설정
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyDIJnXoaIsUPaUG-BCPGCh3bUakWkHGW8s');
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
 const app = express();
 const server = http.createServer(app);
+
+// JSON 파싱 미들웨어 추가
+app.use(express.json());
+
 const io = socketIo(server, {
     cors: {
         origin: "*",
@@ -18,6 +27,26 @@ const io = socketIo(server, {
 
 // 정적 파일 제공
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Gemini API 호출 함수
+async function callGeminiAPI(userMessage, conversationHistory = []) {
+    try {
+        const prompt = `당신은 친근하고 도움이 되는 AI 어시스턴트입니다. 
+사용자와 자연스럽게 대화하며, 질문에 답변하고 도움을 제공하세요.
+답변은 한국어로 하고, 친근하고 자연스러운 톤으로 응답하세요.
+
+사용자 메시지: ${userMessage}
+
+답변:`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+    } catch (error) {
+        console.error('Gemini API 호출 오류:', error);
+        return '죄송합니다. 현재 AI 응답을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.';
+    }
+}
 
 // 연결된 사용자들을 추적
 let connectedUsers = [];
@@ -103,6 +132,23 @@ io.on('connection', (socket) => {
 // 메인 페이지 라우트
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// AI API 엔드포인트
+app.post('/api/ai', async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        if (!message) {
+            return res.status(400).json({ error: '메시지가 필요합니다.' });
+        }
+        
+        const aiResponse = await callGeminiAPI(message);
+        res.json({ response: aiResponse });
+    } catch (error) {
+        console.error('AI API 오류:', error);
+        res.status(500).json({ error: 'AI 응답 처리 중 오류가 발생했습니다.' });
+    }
 });
 
 // 서버 시작
