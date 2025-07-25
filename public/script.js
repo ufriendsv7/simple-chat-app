@@ -33,7 +33,7 @@ const ACCESS_KEY = 'chat_access_granted';
 
 function showChat() {
     accessModal.style.display = 'none';
-    chatContainer.style.display = '';
+    chatContainer.style.display = 'block';
 }
 
 function showAccessModal() {
@@ -51,6 +51,21 @@ function checkAccess() {
         showAccessModal();
     }
 }
+
+accessForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (accessInput.value === ACCESS_CODE) {
+        localStorage.setItem(ACCESS_KEY, 'true');
+        showChat();
+    } else {
+        accessError.textContent = '코드가 올바르지 않습니다.';
+        accessInput.value = '';
+        accessInput.focus();
+    }
+});
+
+// window.onload로 변경
+window.onload = checkAccess;
 
 // 현재 사용자 정보
 let currentUser = null;
@@ -337,7 +352,7 @@ socket.on('reconnect_failed', () => {
 });
 
 // 페이지 로드 시 access code 체크
-window.addEventListener('DOMContentLoaded', checkAccess);
+// window.addEventListener('DOMContentLoaded', checkAccess); // 이 부분은 window.onload로 이동
 
 // 페이지 로드 시 스크롤을 맨 아래로
 window.addEventListener('load', () => {
