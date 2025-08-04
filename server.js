@@ -1,162 +1,201 @@
+// 환경변수 로드
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Gemini API 설정
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyDIJnXoaIsUPaUG-BCPGCh3bUakWkHGW8s');
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
 const app = express();
 const server = http.createServer(app);
-
-// JSON 파싱 미들웨어 추가
-app.use(express.json());
-
 const io = socketIo(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
-    },
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    transports: ['websocket', 'polling'],
-    allowEIO3: true
+    }
 });
 
-// 정적 파일 제공
+// 미들웨어 설정
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Gemini API 호출 함수
-async function callGeminiAPI(userMessage, conversationHistory = []) {
-    try {
-        const prompt = `넌 이름이 '잼민이'인 AI 대화자야. 대화자의 감정을 읽고, 감정적으로 공감하며, 감수성이 풍부한 답변을 해줘. 대화자에게 감정적인 조언도 해주고, 일반적인 질문에도 친근하게 답해줘. 답변은 반드시 한국어로 해.
+// 환경변수에서 API 키 가져오기
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
-대화자 메시지: ${userMessage}
-
-잼민이의 답변:`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
-    } catch (error) {
-        console.error('Gemini API 호출 오류:', error);
-        return '죄송합니다. 현재 잼민이가 답변을 할 수 없습니다. 잠시 후 다시 시도해주세요.';
-    }
+// Gemini AI 초기화 (API 키가 있을 때만)
+let genAI = null;
+if (GOOGLE_API_KEY) {
+    genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
 }
-
-// 연결된 사용자들을 추적
-let connectedUsers = [];
-let guestCounter = 1;
-
-// Socket.IO 연결 처리
-io.on('connection', (socket) => {
-    console.log('새로운 사용자가 연결되었습니다.');
-    
-    // 자동으로 게스트 이름 생성
-    const guestName = `guest${guestCounter}`;
-    guestCounter++;
-    
-    // 사용자 정보 저장
-    const user = {
-        id: socket.id,
-        name: guestName,
-        joinedAt: new Date()
-    };
-    
-    connectedUsers.push(user);
-    
-    // 새 사용자 입장 알림을 모든 클라이언트에게 전송
-    io.emit('userJoined', {
-        user: user,
-        message: `${user.name}님이 입장하셨습니다.`,
-        timestamp: new Date()
-    });
-    
-    // 현재 접속자 목록 전송
-    io.emit('userList', connectedUsers);
-    
-    // 메시지 수신 처리
-    socket.on('sendMessage', (data) => {
-        const message = {
-            id: socket.id,
-            user: user.name,
-            text: data.text,
-            timestamp: new Date()
-        };
-        
-        // 모든 클라이언트에게 메시지 전송
-        io.emit('newMessage', message);
-    });
-    
-    // 사용자 이름 변경 처리
-    socket.on('changeName', (newName) => {
-        const oldName = user.name;
-        user.name = newName;
-        
-        // 이름 변경 알림 전송
-        io.emit('nameChanged', {
-            userId: socket.id,
-            oldName: oldName,
-            newName: newName,
-            message: `${oldName}님이 ${newName}으로 이름을 변경하셨습니다.`,
-            timestamp: new Date()
-        });
-        
-        // 업데이트된 사용자 목록 전송
-        io.emit('userList', connectedUsers);
-    });
-    
-    // 연결 해제 처리
-    socket.on('disconnect', () => {
-        console.log(`${user.name}님이 연결을 해제했습니다.`);
-        
-        // 사용자 목록에서 제거
-        connectedUsers = connectedUsers.filter(u => u.id !== socket.id);
-        
-        // 사용자 퇴장 알림 전송
-        io.emit('userLeft', {
-            user: user,
-            message: `${user.name}님이 퇴장하셨습니다.`,
-            timestamp: new Date()
-        });
-        
-        // 업데이트된 사용자 목록 전송
-        io.emit('userList', connectedUsers);
-    });
-});
-
-// 메인 페이지 라우트
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
 
 // AI API 엔드포인트
 app.post('/api/ai', async (req, res) => {
     try {
         const { message } = req.body;
         
-        if (!message) {
+        if (!message || !message.trim()) {
             return res.status(400).json({ error: '메시지가 필요합니다.' });
         }
         
-        const aiResponse = await callGeminiAPI(message);
-        res.json({ response: aiResponse });
+        if (!genAI) {
+            return res.status(503).json({ 
+                error: 'AI 서비스가 현재 사용할 수 없습니다. API 키가 설정되지 않았습니다.' 
+            });
+        }
+        
+        // Gemini 모델 초기화
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        
+        // 프롬프트 설정
+        const prompt = `당신은 '잼민이'라는 친근하고 재미있는 AI 어시스턴트입니다. 
+        사용자와 자연스럽게 대화하고, 유용하고 재미있는 답변을 제공해주세요. 
+        답변은 한국어로 하고, 친근하고 재미있는 톤을 유지해주세요.
+        
+        사용자 메시지: ${message}`;
+        
+        // AI 응답 생성
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        res.json({ response: text });
+        
     } catch (error) {
         console.error('AI API 오류:', error);
-        res.status(500).json({ error: 'AI 응답 처리 중 오류가 발생했습니다.' });
+        
+        // 구체적인 에러 메시지 제공
+        if (error.message.includes('API_KEY')) {
+            res.status(401).json({ 
+                error: 'AI 서비스 인증에 실패했습니다. API 키를 확인해주세요.' 
+            });
+        } else if (error.message.includes('quota')) {
+            res.status(429).json({ 
+                error: 'AI 서비스 사용량 한도를 초과했습니다. 잠시 후 다시 시도해주세요.' 
+            });
+        } else if (error.message.includes('content')) {
+            res.status(400).json({ 
+                error: '부적절한 내용이 감지되었습니다. 다른 메시지를 시도해주세요.' 
+            });
+        } else {
+            res.status(500).json({ 
+                error: 'AI 서비스 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' 
+            });
+        }
     }
 });
 
-// 서버 시작
+// 사용자 관리
+const users = new Map();
+let guestCounter = 1;
+
+// Socket.IO 연결 처리
+io.on('connection', (socket) => {
+    console.log('새로운 사용자가 연결되었습니다:', socket.id);
+    
+    // 새 사용자 생성
+    const userName = `guest${guestCounter++}`;
+    const user = {
+        id: socket.id,
+        name: userName
+    };
+    
+    users.set(socket.id, user);
+    
+    // 사용자 입장 알림
+    const joinMessage = `${userName}님이 입장하셨습니다.`;
+    socket.broadcast.emit('userJoined', {
+        message: joinMessage,
+        users: Array.from(users.values())
+    });
+    
+    // 현재 사용자 목록 전송
+    socket.emit('userList', Array.from(users.values()));
+    
+    // 메시지 수신
+    socket.on('sendMessage', (data) => {
+        const user = users.get(socket.id);
+        if (user) {
+            const message = {
+                id: socket.id,
+                user: user.name,
+                text: data.text,
+                timestamp: new Date()
+            };
+            
+            io.emit('newMessage', message);
+        }
+    });
+    
+    // 이름 변경
+    socket.on('changeName', (newName) => {
+        const user = users.get(socket.id);
+        if (user && newName && newName.trim() && newName.length <= 20) {
+            const oldName = user.name;
+            user.name = newName.trim();
+            
+            const changeMessage = `${oldName}님이 ${newName}으로 이름을 변경하셨습니다.`;
+            io.emit('nameChanged', {
+                userId: socket.id,
+                newName: newName,
+                message: changeMessage
+            });
+            
+            // 사용자 목록 업데이트
+            io.emit('userList', Array.from(users.values()));
+        }
+    });
+    
+    // 연결 해제
+    socket.on('disconnect', () => {
+        console.log('사용자가 연결을 해제했습니다:', socket.id);
+        
+        const user = users.get(socket.id);
+        if (user) {
+            const leaveMessage = `${user.name}님이 퇴장하셨습니다.`;
+            users.delete(socket.id);
+            
+            socket.broadcast.emit('userLeft', {
+                message: leaveMessage,
+                users: Array.from(users.values())
+            });
+        }
+    });
+});
+
+// 서버 상태 확인 엔드포인트
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'running',
+        aiAvailable: !!genAI,
+        connectedUsers: users.size,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// 루트 경로
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 포트 설정
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
-server.listen(PORT, HOST, () => {
-    console.log(`채팅 서버가 포트 ${PORT}에서 실행 중입니다.`);
-    if (process.env.NODE_ENV === 'production') {
-        console.log(`서버가 배포 환경에서 실행 중입니다.`);
-    } else {
-        console.log(`http://localhost:${PORT}에서 접속하세요.`);
+
+server.listen(PORT, () => {
+    console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
+    console.log(`AI 서비스 상태: ${genAI ? '사용 가능' : 'API 키 없음'}`);
+    
+    if (!genAI) {
+        console.log('⚠️  AI 기능을 사용하려면 GOOGLE_API_KEY 환경변수를 설정하세요.');
+        console.log('   예: GOOGLE_API_KEY=your_api_key_here npm start');
     }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM 신호를 받았습니다. 서버를 종료합니다...');
+    server.close(() => {
+        console.log('서버가 정상적으로 종료되었습니다.');
+        process.exit(0);
+    });
 });

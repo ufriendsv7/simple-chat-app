@@ -27,19 +27,28 @@
 npm install
 ```
 
-### 2. 개발 모드로 실행
+### 2. Google AI API 키 설정 (AI 기능 사용 시)
+
+1. [Google AI Studio](https://makersuite.google.com/app/apikey)에서 API 키 발급
+2. `env.example` 파일을 `.env`로 복사하고 API 키 설정:
+   ```bash
+   cp env.example .env
+   ```
+3. `.env` 파일에서 `GOOGLE_API_KEY` 값을 실제 API 키로 변경
+
+### 3. 개발 모드로 실행
 
 ```bash
 npm run dev
 ```
 
-### 3. 프로덕션 모드로 실행
+### 4. 프로덕션 모드로 실행
 
 ```bash
 npm start
 ```
 
-### 4. 브라우저에서 접속
+### 5. 브라우저에서 접속
 
 ```
 http://localhost:3000
@@ -134,8 +143,27 @@ simple-chat-app/
 
 배포가 완료되면:
 1. 공개 URL 확인 (예: `https://your-app.railway.app`)
-2. URL을 다른 사람들과 공유
-3. 누구나 링크로 접속하여 채팅 가능
+2. **AI 기능 사용 시**: 배포 플랫폼에서 환경변수 `GOOGLE_API_KEY` 설정
+3. URL을 다른 사람들과 공유
+4. 누구나 링크로 접속하여 채팅 가능
+
+### 🤖 AI 기능 설정 (배포 시)
+
+#### Railway
+1. Railway 대시보드에서 프로젝트 선택
+2. "Variables" 탭 클릭
+3. `GOOGLE_API_KEY` 환경변수 추가
+4. 값에 Google AI API 키 입력
+
+#### Render
+1. Render 대시보드에서 서비스 선택
+2. "Environment" 섹션에서 환경변수 추가
+3. `GOOGLE_API_KEY` 키와 API 키 값 설정
+
+#### Vercel
+1. Vercel 대시보드에서 프로젝트 선택
+2. "Settings" → "Environment Variables"
+3. `GOOGLE_API_KEY` 환경변수 추가
 
 ### 📱 로컬 네트워크에서 공유
 

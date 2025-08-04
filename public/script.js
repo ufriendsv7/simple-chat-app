@@ -131,12 +131,28 @@ messageForm.addEventListener('submit', async (e) => {
                             timestamp: new Date()
                         };
                         addMessage(aiResponse);
+                    } else if (data.error) {
+                        addMessage(`잼민이: ${data.error}`, 'system');
                     } else {
                         addMessage('잼민이의 응답을 받을 수 없습니다.', 'system');
                     }
                 } catch (error) {
                     console.error('AI API 호출 오류:', error);
-                    addMessage('잼민이 응답 처리 중 오류가 발생했습니다.', 'system');
+                    
+                    // 구체적인 에러 메시지 표시
+                    let errorMessage = '잼민이 응답 처리 중 오류가 발생했습니다.';
+                    
+                    if (error.message.includes('Failed to fetch')) {
+                        errorMessage = '네트워크 연결을 확인해주세요.';
+                    } else if (error.message.includes('401')) {
+                        errorMessage = 'AI 서비스 인증에 실패했습니다.';
+                    } else if (error.message.includes('429')) {
+                        errorMessage = 'AI 서비스 사용량 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+                    } else if (error.message.includes('503')) {
+                        errorMessage = 'AI 서비스가 현재 사용할 수 없습니다.';
+                    }
+                    
+                    addMessage(errorMessage, 'system');
                 }
             }
         } else {
