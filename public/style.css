@@ -254,20 +254,21 @@ body.disconnected {
 }
 
 .message.ai .message-content {
-    background: linear-gradient(135deg, #ffdeeb 0%, #b197fc 100%);
-    color: #5f3dc4;
-    border-left: 4px solid #b197fc;
-    font-family: 'Noto Sans KR', 'Comic Sans MS', cursive, sans-serif;
-    font-size: 1.08em;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
+    border-left: 4px solid #2196f3;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 1em;
     letter-spacing: 0.01em;
-    box-shadow: 0 2px 8px rgba(177, 151, 252, 0.08);
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+    line-height: 1.5;
 }
 
 .message.ai .message-user {
-    color: #b197fc;
-    font-weight: 700;
-    font-family: 'Noto Sans KR', 'Comic Sans MS', cursive, sans-serif;
-    font-size: 1.1em;
+    color: #1976d2;
+    font-weight: 600;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 1em;
 }
 
 .system-message {

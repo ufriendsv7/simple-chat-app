@@ -124,7 +124,7 @@ messageForm.addEventListener('submit', async (e) => {
     
     if (message) {
         // AI 메시지인지 확인
-        const aiPattern = /^@(ai|잼민이)/i;
+        const aiPattern = /^@(ai|AI|어시스턴트)/i;
         if (aiPattern.test(message)) {
             const aiMessage = message.replace(aiPattern, '').trim();
             if (aiMessage) {
@@ -156,21 +156,21 @@ messageForm.addEventListener('submit', async (e) => {
                         // AI 응답 메시지 표시
                         const aiResponse = {
                             id: 'ai-response',
-                            user: '잼민이',
+                            user: 'AI 어시스턴트',
                             text: data.response,
                             timestamp: new Date()
                         };
                         addMessageWithAutoScroll(aiResponse);
                     } else if (data.error) {
-                        addMessageWithAutoScroll(`잼민이: ${data.error}`, 'system');
+                        addMessageWithAutoScroll(`AI 어시스턴트: ${data.error}`, 'system');
                     } else {
-                        addMessageWithAutoScroll('잼민이의 응답을 받을 수 없습니다.', 'system');
+                        addMessageWithAutoScroll('AI 어시스턴트의 응답을 받을 수 없습니다.', 'system');
                     }
                 } catch (error) {
                     console.error('AI API 호출 오류:', error);
                     
                     // 구체적인 에러 메시지 표시
-                    let errorMessage = '잼민이 응답 처리 중 오류가 발생했습니다.';
+                    let errorMessage = 'AI 어시스턴트 응답 처리 중 오류가 발생했습니다.';
                     
                     if (error.message.includes('Failed to fetch')) {
                         errorMessage = '네트워크 연결을 확인해주세요.';
@@ -242,7 +242,7 @@ function addMessage(message, type = 'message') {
         messageDiv.textContent = message;
     } else {
         const isOwnMessage = currentUser && message.id === socket.id;
-        const isAIMessage = message.user === '잼민이';
+        const isAIMessage = message.user === 'AI 어시스턴트';
         
         let messageClass = 'message ';
         if (isOwnMessage) {
@@ -274,19 +274,23 @@ function addMessage(message, type = 'message') {
 
 // 사용자 목록 업데이트
 function updateUserList(users) {
-    userList.innerHTML = '';
+    // 기존 사용자 목록을 유지하면서 업데이트
+    const existingUsers = Array.from(userList.children).map(item => item.textContent);
     
+    // 새 사용자 목록과 비교하여 추가/제거
+    users.forEach(user => {
+        if (!existingUsers.includes(user.name)) {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user-item online';
+            userDiv.textContent = user.name;
+            userList.appendChild(userDiv);
+        }
+    });
+    
+    // 접속자가 없는 경우에만 메시지 표시
     if (users.length === 0) {
         userList.innerHTML = '<div class="loading">접속자가 없습니다.</div>';
-        return;
     }
-    
-    users.forEach(user => {
-        const userDiv = document.createElement('div');
-        userDiv.className = 'user-item online';
-        userDiv.textContent = user.name;
-        userList.appendChild(userDiv);
-    });
 }
 
 // 스크롤을 맨 아래로
