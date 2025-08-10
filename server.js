@@ -66,6 +66,16 @@ app.post('/api/ai', async (req, res) => {
         const response = await result.response;
         const text = response.text();
         
+        // AI 응답을 메시지 히스토리에 저장
+        const aiMessage = {
+            id: `ai-${Date.now()}`,
+            user: 'AI 어시스턴트',
+            text: text,
+            timestamp: new Date(),
+            type: 'ai'
+        };
+        
+        addToHistory(aiMessage);
         res.json({ response: text });
         
     } catch (error) {
@@ -91,6 +101,25 @@ app.post('/api/ai', async (req, res) => {
         }
     }
 });
+
+// 메시지 히스토리 저장 (최근 100개 메시지)
+const messageHistory = [];
+const MAX_MESSAGES = 100;
+
+// 메시지 히스토리에 추가하는 함수
+function addToHistory(message) {
+    messageHistory.push(message);
+    
+    // 최대 메시지 개수 제한
+    if (messageHistory.length > MAX_MESSAGES) {
+        messageHistory.shift(); // 가장 오래된 메시지 제거
+    }
+}
+
+// 메시지 히스토리 가져오기
+function getMessageHistory() {
+    return messageHistory.slice(); // 복사본 반환
+}
 
 // 사용자 관리
 const users = new Map();
@@ -131,6 +160,7 @@ io.on('connection', (socket) => {
             };
             
             io.emit('newMessage', message);
+            addToHistory(message); // 메시지 히스토리에 추가
         }
     });
     
@@ -167,6 +197,42 @@ io.on('connection', (socket) => {
                 users: Array.from(users.values())
             });
         }
+    });
+
+    // 사용자 접속
+    socket.on('join', (userData) => {
+        const userId = socket.id;
+        const userName = userData.name || `게스트${Math.floor(Math.random() * 1000)}`;
+        
+        // 사용자 정보 저장
+        users.set(userId, {
+            id: userId,
+            name: userName,
+            joinedAt: new Date()
+        });
+        
+        // 기존 메시지 히스토리 전송
+        const history = getMessageHistory();
+        if (history.length > 0) {
+            socket.emit('messageHistory', history);
+        }
+        
+        // 입장 메시지 생성 및 전송
+        const joinMessage = {
+            id: `join-${Date.now()}`,
+            user: 'System',
+            text: `${userName}님이 입장했습니다.`,
+            timestamp: new Date(),
+            type: 'system'
+        };
+        
+        io.emit('newMessage', joinMessage);
+        addToHistory(joinMessage);
+        
+        // 사용자 목록 업데이트
+        io.emit('userList', Array.from(users.values()));
+        
+        console.log(`${userName}님이 입장했습니다. (ID: ${userId})`);
     });
 });
 

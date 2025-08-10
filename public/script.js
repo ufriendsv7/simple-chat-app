@@ -235,11 +235,12 @@ nameForm.addEventListener('submit', (e) => {
 // 메시지 추가 함수
 function addMessage(message, type = 'message') {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${type}`;
     
-    if (type === 'system') {
-        messageDiv.className = 'system-message';
-        messageDiv.textContent = message;
+    if (type === 'system' || message.type === 'system') {
+        messageDiv.className = 'message system';
+        messageDiv.innerHTML = `
+            <div class="message-content">${escapeHtml(message.text || message)}</div>
+        `;
     } else {
         const isOwnMessage = currentUser && message.id === socket.id;
         const isAIMessage = message.user === 'AI 어시스턴트';
@@ -366,13 +367,15 @@ function formatTime(date) {
 // 연결 성공
 socket.on('connect', () => {
     console.log('서버에 연결되었습니다.');
-    addMessageWithAutoScroll('서버에 연결되었습니다.', 'system');
     
     // 연결 상태 표시
     document.body.classList.add('connected');
     document.body.classList.remove('disconnected');
     connectionStatus.classList.add('connected');
     connectionStatus.classList.remove('disconnected');
+    
+    // 서버에 사용자 접속 알림 (히스토리 요청)
+    socket.emit('join', { name: currentUser ? currentUser.name : null });
 });
 
 // 새 메시지 수신
@@ -411,6 +414,24 @@ socket.on('nameChanged', (data) => {
     if (data.userId === socket.id) {
         currentUserSpan.textContent = data.newName;
     }
+});
+
+// 메시지 히스토리 수신
+socket.on('messageHistory', (history) => {
+    console.log('메시지 히스토리 수신:', history.length, '개 메시지');
+    
+    // 기존 메시지 컨테이너 비우기
+    messagesContainer.innerHTML = '';
+    
+    // 히스토리 메시지들을 순서대로 표시
+    history.forEach(message => {
+        addMessage(message, message.type || 'message');
+    });
+    
+    // 히스토리 로딩 후 맨 아래로 스크롤
+    setTimeout(() => {
+        scrollToBottom();
+    }, 100);
 });
 
 // 연결 해제
