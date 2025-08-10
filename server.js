@@ -44,8 +44,8 @@ app.post('/api/ai', async (req, res) => {
             });
         }
         
-        // Gemini 모델 초기화
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                                // Gemini 모델 초기화 (최신 모델 사용)
+                        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
         
         // 프롬프트 설정
         const prompt = `당신은 '잼민이'라는 친근하고 재미있는 AI 어시스턴트입니다. 
