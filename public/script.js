@@ -64,8 +64,38 @@ accessForm.addEventListener('submit', (e) => {
     }
 });
 
+// 페이지 로드 시 스크롤 상태 확인
+function checkScrollStatus() {
+    if (messagesContainer) {
+        console.log('Scroll container status:', {
+            element: messagesContainer,
+            scrollHeight: messagesContainer.scrollHeight,
+            clientHeight: messagesContainer.clientHeight,
+            scrollTop: messagesContainer.scrollTop,
+            overflow: getComputedStyle(messagesContainer).overflow,
+            overflowY: getComputedStyle(messagesContainer).overflowY,
+            height: getComputedStyle(messagesContainer).height,
+            maxHeight: getComputedStyle(messagesContainer).maxHeight
+        });
+        
+        // 스크롤이 필요한지 확인
+        if (messagesContainer.scrollHeight > messagesContainer.clientHeight) {
+            console.log('Scroll is needed - content height > container height');
+        } else {
+            console.log('No scroll needed - content fits in container');
+        }
+    } else {
+        console.error('Messages container not found during scroll check');
+    }
+}
+
 // window.onload로 변경
-window.onload = checkAccess;
+window.onload = function() {
+    checkAccess();
+    
+    // 스크롤 상태 확인 (약간의 지연 후)
+    setTimeout(checkScrollStatus, 1000);
+};
 
 // 현재 사용자 정보
 let currentUser = null;
@@ -261,18 +291,33 @@ function updateUserList(users) {
 
 // 스크롤을 맨 아래로
 function scrollToBottom() {
-    // 스크롤이 맨 아래에 있는지 확인
-    const isAtBottom = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 10;
+    // 스크롤 컨테이너가 존재하는지 확인
+    if (!messagesContainer) {
+        console.error('Messages container not found');
+        return;
+    }
     
-    // 스크롤을 맨 아래로 이동
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
-    // 부드러운 스크롤 애니메이션 (선택사항)
-    if (!isAtBottom) {
-        messagesContainer.scrollTo({
-            top: messagesContainer.scrollHeight,
-            behavior: 'smooth'
+    // 강제로 스크롤을 맨 아래로 이동
+    try {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // 부드러운 스크롤 시도
+        if (messagesContainer.scrollTo) {
+            messagesContainer.scrollTo({
+                top: messagesContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+        
+        console.log('Scrolled to bottom:', {
+            scrollTop: messagesContainer.scrollTop,
+            scrollHeight: messagesContainer.scrollHeight,
+            clientHeight: messagesContainer.clientHeight
         });
+    } catch (error) {
+        console.error('Scroll error:', error);
+        // 폴백: 직접 스크롤 설정
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 }
 
