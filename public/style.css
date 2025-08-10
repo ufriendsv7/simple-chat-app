@@ -143,6 +143,9 @@ body.disconnected {
     display: flex;
     flex-direction: column;
     background: white;
+    /* 스크롤 영역 명확히 설정 */
+    min-height: 0;
+    overflow: hidden;
 }
 
 .messages {
@@ -150,9 +153,40 @@ body.disconnected {
     padding: 20px;
     padding-bottom: 100px; /* 입력창 높이만큼 여백 추가 */
     overflow-y: auto;
+    overflow-x: hidden; /* 가로 스크롤 방지 */
     display: flex;
     flex-direction: column;
     gap: 15px;
+    /* 스크롤바 스타일링 */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #c1c1c1 #f1f1f1; /* Firefox */
+    /* 스크롤 동작 개선 */
+    scroll-behavior: smooth;
+    /* 스크롤 영역 확실히 확보 */
+    min-height: 0;
+    height: 100%;
+    /* 스크롤 성능 최적화 */
+    -webkit-overflow-scrolling: touch; /* iOS 스크롤 개선 */
+    will-change: scroll-position;
+}
+
+/* Webkit 브라우저용 스크롤바 스타일링 */
+.messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .welcome-message {
@@ -483,6 +517,16 @@ body.disconnected {
         /* 모바일에서 스크롤 영역 확보 */
         height: calc(100vh - 200px);
         height: calc(100dvh - 200px);
+        /* 모바일 스크롤 최적화 */
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        /* 스크롤바 숨김 (모바일에서는 불필요) */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .messages::-webkit-scrollbar {
+        display: none;
     }
     
     #message-input {

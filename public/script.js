@@ -105,7 +105,7 @@ messageForm.addEventListener('submit', async (e) => {
                     text: message,
                     timestamp: new Date()
                 };
-                addMessage(userMessage);
+                addMessageWithAutoScroll(userMessage);
                 
                 // 입력창 비우기
                 messageInput.value = '';
@@ -130,11 +130,11 @@ messageForm.addEventListener('submit', async (e) => {
                             text: data.response,
                             timestamp: new Date()
                         };
-                        addMessage(aiResponse);
+                        addMessageWithAutoScroll(aiResponse);
                     } else if (data.error) {
-                        addMessage(`잼민이: ${data.error}`, 'system');
+                        addMessageWithAutoScroll(`잼민이: ${data.error}`, 'system');
                     } else {
-                        addMessage('잼민이의 응답을 받을 수 없습니다.', 'system');
+                        addMessageWithAutoScroll('잼민이의 응답을 받을 수 없습니다.', 'system');
                     }
                 } catch (error) {
                     console.error('AI API 호출 오류:', error);
@@ -152,7 +152,7 @@ messageForm.addEventListener('submit', async (e) => {
                         errorMessage = 'AI 서비스가 현재 사용할 수 없습니다.';
                     }
                     
-                    addMessage(errorMessage, 'system');
+                    addMessageWithAutoScroll(errorMessage, 'system');
                 }
             }
         } else {
@@ -240,7 +240,6 @@ function addMessage(message, type = 'message') {
     }
     
     messagesContainer.appendChild(messageDiv);
-    scrollToBottom();
 }
 
 // 사용자 목록 업데이트
@@ -262,7 +261,40 @@ function updateUserList(users) {
 
 // 스크롤을 맨 아래로
 function scrollToBottom() {
+    // 스크롤이 맨 아래에 있는지 확인
+    const isAtBottom = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 10;
+    
+    // 스크롤을 맨 아래로 이동
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // 부드러운 스크롤 애니메이션 (선택사항)
+    if (!isAtBottom) {
+        messagesContainer.scrollTo({
+            top: messagesContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// 스크롤 상태 확인 함수
+function isScrolledToBottom() {
+    return messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 10;
+}
+
+// 사용자가 스크롤을 위로 올렸을 때 자동 스크롤 비활성화
+let autoScroll = true;
+messagesContainer.addEventListener('scroll', () => {
+    autoScroll = isScrolledToBottom();
+});
+
+// 메시지 추가 시 자동 스크롤 조건부 적용
+function addMessageWithAutoScroll(message, type = 'message') {
+    addMessage(message, type);
+    
+    // 자동 스크롤이 활성화된 경우에만 스크롤
+    if (autoScroll) {
+        scrollToBottom();
+    }
 }
 
 // HTML 이스케이프 함수
@@ -285,7 +317,7 @@ function formatTime(date) {
 // 연결 성공
 socket.on('connect', () => {
     console.log('서버에 연결되었습니다.');
-    addMessage('서버에 연결되었습니다.', 'system');
+    addMessageWithAutoScroll('서버에 연결되었습니다.', 'system');
     
     // 연결 상태 표시
     document.body.classList.add('connected');
@@ -296,18 +328,18 @@ socket.on('connect', () => {
 
 // 새 메시지 수신
 socket.on('newMessage', (message) => {
-    addMessage(message);
+    addMessageWithAutoScroll(message);
 });
 
 // 사용자 입장
 socket.on('userJoined', (data) => {
-    addMessage(data.message, 'system');
+    addMessageWithAutoScroll(data.message, 'system');
     updateUserList(data.users || []);
 });
 
 // 사용자 퇴장
 socket.on('userLeft', (data) => {
-    addMessage(data.message, 'system');
+    addMessageWithAutoScroll(data.message, 'system');
     updateUserList(data.users || []);
 });
 
@@ -324,7 +356,7 @@ socket.on('userList', (users) => {
 
 // 이름 변경 알림
 socket.on('nameChanged', (data) => {
-    addMessage(data.message, 'system');
+    addMessageWithAutoScroll(data.message, 'system');
     
     // 현재 사용자 이름 업데이트
     if (data.userId === socket.id) {
@@ -335,7 +367,7 @@ socket.on('nameChanged', (data) => {
 // 연결 해제
 socket.on('disconnect', (reason) => {
     console.log('서버와의 연결이 끊어졌습니다. 이유:', reason);
-    addMessage('서버와의 연결이 끊어졌습니다. 다시 연결을 시도합니다...', 'system');
+    addMessageWithAutoScroll('서버와의 연결이 끊어졌습니다. 다시 연결을 시도합니다...', 'system');
     
     // 연결 상태 표시
     document.body.classList.remove('connected');
@@ -347,7 +379,7 @@ socket.on('disconnect', (reason) => {
 // 재연결
 socket.on('reconnect', (attemptNumber) => {
     console.log(`서버에 재연결되었습니다. (시도 횟수: ${attemptNumber})`);
-    addMessage(`서버에 재연결되었습니다. (시도 횟수: ${attemptNumber})`, 'system');
+    addMessageWithAutoScroll(`서버에 재연결되었습니다. (시도 횟수: ${attemptNumber})`, 'system');
     
     // 연결 상태 표시
     document.body.classList.add('connected');
@@ -359,13 +391,13 @@ socket.on('reconnect', (attemptNumber) => {
 // 재연결 시도
 socket.on('reconnect_attempt', (attemptNumber) => {
     console.log(`재연결 시도 중... (${attemptNumber}번째 시도)`);
-    addMessage(`재연결 시도 중... (${attemptNumber}번째 시도)`, 'system');
+    addMessageWithAutoScroll(`재연결 시도 중... (${attemptNumber}번째 시도)`, 'system');
 });
 
 // 재연결 실패
 socket.on('reconnect_failed', () => {
     console.log('재연결에 실패했습니다.');
-    addMessage('재연결에 실패했습니다. 페이지를 새로고침해주세요.', 'system');
+    addMessageWithAutoScroll('재연결에 실패했습니다. 페이지를 새로고침해주세요.', 'system');
 });
 
 // 페이지 로드 시 access code 체크
